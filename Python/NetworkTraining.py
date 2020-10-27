@@ -1,4 +1,4 @@
-# Network Training Script
+# Network Training Script - IN PROGRESS
 
 # TensorFlow and tf.keras
 import tensorflow as tf
