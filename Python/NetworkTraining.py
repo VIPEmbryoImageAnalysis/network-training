@@ -1,19 +1,32 @@
 # Network Training Script
 
-import os
-import numpy as np
-import glob
-from PIL import Image
-import mahotas as mh
-import matplotlib as plt
+# TensorFlow and tf.keras
+import tensorflow as tf
 
-# Define Image Locations
-imgDir = "/This PC/Desktop/Embryo Extracted Frames"     # Location of extracted frames for training
-labelDir = "/This PC/Desktop/Embryo Labeled Test"       # Location of labeled frames for training
-for file_name in glob.iglob('/This PC/Desktop/Embryo Extracted Frames'):
-    img = Image.open(file_name)     # Open images (frames) inside of inputted folder
-    labels = [1,2]      # Define labels on frames (Label 1 = Background, Label 2 = Embryo)
-    labelNames = ["Background", "Embryo"]       # Names of labels used
+# Helper libraries
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Import model from model.py
+from model.py import model
+
+# Paths for images and labels
+train_images = 
+train_labels = 
+
+test_images =
+test_labels =
+
+# Feed the model
+model.fit(train_images, train_labels, epochs=10)
+
+# Evaluate the accuracy
+test_loss, test_acc = model.evaluate(test_images, test_labels, verbose=2)
+print('\nTest accuracy:', test_acc)
+
+# Make predictions
+probability_model = tf.keras.Sequential([model, tf.keras.layers.Softmax()])
+predictions = probability_model.predict(test_images)
 
     
 
