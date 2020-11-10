@@ -10,8 +10,7 @@ from config import imshape, model_name, n_classes
 from models import preprocess_input, dice
 from tensorflow.keras.utils import to_categorical
 from utils import add_masks
-import matplotlib.pyplot as plt
-from train import sorted_fcn
+import pytesseract
 
 
 files = []
@@ -44,7 +43,24 @@ for j in files:
     video = cv2.VideoCapture(j)
     success,image = video.read()
     image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+    # Cropped using ROI coordinates
+    # img[y coordinates, x coordinates]
+    currentTime = image[473:486, 452:486]
+
+    # use tesseracts' OCR function
+    text = pytesseract.image_to_string(currentTime, lang='eng')
+
+    # convert the string recieved from OCR to int with numbers only
+    M = int(''.join(filter(str.isdigit, text)))
+
+    # convert to realtime displayed on time stamp and store it
+    extractedTime = M / 10
+    timeArray.append(extractedTime)
+    
+    # resize image
     image = cv2.resize(image, imsize)
+    
     count = 1
     success = True
     while success:
@@ -58,6 +74,8 @@ count = 1
 # and apply segmentation to them
 for x in org_folders:
     for y in os.listdir(x):
+        
+        # Generate prediction mask
         img_bgr = cv2.imread(y)
         Image.fromarray(img_bgr)
         img = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
@@ -65,12 +83,25 @@ for x in org_folders:
         roi_pred = model.predict(tmp)
         roi_mask = roi_pred.squeeze() * 255.0
         roi_mask = add_masks(roi_mask)
+        
+        # Determine the number of predicted pixels
+        pixelcount = 0
+        for x in list(range(256)):
+            for y in list(range(256)):
+                if roi_mask[x,y,1] > 0:
+                    count += 1
+                else:
+                    break
+        
+        # Store the size of embryo into an array
+        pixelArray.append(pixelcount * pixeltoreal)
+        
+        # Generate overlay image of the prediction onto the original
         roi_mask = np.array(roi_mask, dtype=np.uint8)
         roi_mask = cv2.addWeighted(img, 1.0, roi_mask, 1.0, 0)
         
         # save image ** Will need to update to save in a new folder **
         cv2.imwrite(os.path.join(x , "Segmented_Frame_%d.png" % (count)), image)
         count += 1
-    
-    
-# evaluate scores
+        
+        
