@@ -45,6 +45,8 @@ def plot_image(i, predictions_array, true_label, img):
   else:
     color = 'red'
 
+  class_names = ['Embryo', 'Background']
+
   plt.xlabel("{} {:2.0f}% ({})".format(class_names[predicted_label], 100*np.max(predictions_array), class_names[true_label]), color=color)
 
 def plot_value_array(i, predictions_array, true_label):
