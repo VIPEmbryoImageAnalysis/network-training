@@ -7,8 +7,7 @@ import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
 
-# Import model from model.py
-from model.py import model
+from model import unet
 
 # Paths for images and labels
 train_images = '/Users/christinembramos/Desktop/Embryo Image Analysis/TESTFOLDER'  # Path used only as placeholder
@@ -16,6 +15,9 @@ train_labels = '/Users/christinembramos/Desktop/Embryo Image Analysis/TESTFOLDER
 
 test_images = '/Users/christinembramos/Desktop/Embryo Image Analysis/TESTFOLDER'   # Path used only as placeholder
 test_labels = '/Users/christinembramos/Desktop/Embryo Image Analysis/TESTFOLDER'   # Path used only as placeholder
+
+# Call model
+model = unet(pretrained=False, base=2)
 
 # Feed the model
 model.fit(train_images, train_labels, epochs=10)
