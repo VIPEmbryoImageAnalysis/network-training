@@ -1,5 +1,3 @@
-# IN PROGRESS
-
 import os
 import cv2
 import tensorflow as tf
@@ -11,7 +9,8 @@ from models import preprocess_input, dice
 from tensorflow.keras.utils import to_categorical
 from utils import add_masks
 import pytesseract
-
+import csv
+import matplotlib.pyplot as plt
 
 files = []
 org_folders = []
@@ -21,6 +20,14 @@ pixeltoreal = 0.58 * 0.58
 imsize = (256,256)
 q = 1
 homepath = os.getcwd()
+
+# Create an empty CSV file
+with open('embryo_results.csv', 'w', newline='') as csvfile:
+    fieldnames = ['Videos','Time (h)','Initial Size (um^2)','Final Size (um^2)',
+                   'Final Size Rank','Average Growth Rate','Avg Growth Rate Rank']
+    thewriter = csv.DictWriter(csvfile, fieldnames=fieldnames)
+    thewriter.writeheader()
+    
 
 # Load the trained model
 model = load_model(os.path.join('models', 'unet_multi.model'),
@@ -104,4 +111,83 @@ for x in org_folders:
         cv2.imwrite(os.path.join(x , "Segmented_Frame_%d.png" % (count)), image)
         count += 1
         
+# Linear Regression Plots
+z = np.polyfit(timeArray, pixelArray, 1)
+p = np.poly1d(z)
+
+xp = np.linspace(timeArray[0], timeArray[-1], 100)
+genplot = plt.plot(timeArray, pixelArray, '--', label='Real Time Growth')
+plt.plot(xp, p(xp), '-', label='Average Growth Rate')
+plt.xlabel('Time (Hours)')
+plt.ylabel('Area (μm²)')
+plt.title(name)
+plt.legend()
+
+
+# Initial Size
+initSize = pixelArray[0]
+
+# Final Size
+finalSize = pixelArray[-1]
+
+# Input Data Into CSV File
+thewriter.writerow({'Videos':j, 'Time (h)':timeArray[-1], 'Initial Size (um^2)':pixelArray[0], 
+                    'Final Size Rank':1, 'Average Growth Rate': p[1], 
+                    'Avg Growth Rate Rank':1, 'Final Size (um^2)':pixelArray[-1]})
+
+
+# If there are more than 1 video...
+if numVideos > 1:
+    
+    # Reopen the CSV file
+    with open('embryo_results.csv', newline='') as f:
+        reader = csv.reader(f)
+        data = list(reader)
+     
+    # Size Ranking
+    tempSize = []
+    
+    for i in data[1:]:
+        tempSize.append(float((i[3])))
+    
+    x = tempSize
+    index = [0]*len(x)
+
+    for i in range(len(x)):
+        index[x.index(min(x))] = i
+        x[x.index(min(x))] = max(x)+1
+    
+    # Replace preset ranking with new ranking
+    pos1 = 0
+    for i in data[1:]:
+        i[4] = str(index[pos1])
+        pos1 = pos1 + 1
+    
+    # Growth Ranking
+    tempGrowth = []
+    for i in data[1:]:
+        tempGrowth.append(int(float(i[5])))
+    
+    x = tempGrowth
+    index = [0]*len(x)
+
+    for i in range(len(x)):
+        index[x.index(min(x))] = i
+        x[x.index(min(x))] = max(x)+1
+        
+    # Replace preset ranking with new ranking
+    pos2 = 0
+    for i in data[1:]:
+            i[6] = str(index[pos2])
+            pos2 = pos2 + 1
+    
+    # Rewrite list into CSV
+    with open('embryo_results.csv', 'w', newline='') as myfile:
+        wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
+        for i in data:
+            wr.writerow(i)
+    
+
+
+
         
